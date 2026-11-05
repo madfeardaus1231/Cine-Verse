@@ -35,7 +35,7 @@ function validToken(event){
   if(got.length!==expected.length||!crypto.timingSafeEqual(got,expected))return false;
   try{const p=JSON.parse(Buffer.from(data,"base64url").toString());return p.role==="admin"&&p.exp>Date.now();}catch{return false;}
 }
-export default async (event) => {
+export const handler = async (event) => {
   const requestPath = event.path || new URL(event.rawUrl || event.url || "https://localhost/").pathname;
 const path = requestPath.replace("/.netlify/functions/api","").replace(/^\/api/,"") || "/";
   const method=event.httpMethod;
