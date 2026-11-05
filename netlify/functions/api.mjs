@@ -1,4 +1,4 @@
-import { getStore, connectLambda } from "@netlify/blobs";
+import { getStore } from "@netlify/blobs";
 import crypto from "node:crypto";
 
 const store = () => getStore("cineverse-data");
@@ -35,9 +35,8 @@ function validToken(event){
   if(got.length!==expected.length||!crypto.timingSafeEqual(got,expected))return false;
   try{const p=JSON.parse(Buffer.from(data,"base64url").toString());return p.role==="admin"&&p.exp>Date.now();}catch{return false;}
 }
-export const handler = async (event) => {
-  connectLambda(event);
-  const path=event.path.replace(/^\/(?:\.netlify\/functions|api)\/api(?=\/|$)/,"")||"/";
+export default async (event) => {
+  const path=event.path.replace("/.netlify/functions/api","").replace(/^\/api/,"")||"/";
   const method=event.httpMethod;
   if(method==="OPTIONS") return {statusCode:204,headers:{"access-control-allow-origin":"*","access-control-allow-headers":"content-type,authorization","access-control-allow-methods":"GET,POST,PUT,DELETE,OPTIONS"}};
   try{
@@ -53,7 +52,7 @@ export const handler = async (event) => {
     }
     if(path==="/categories"&&method==="GET")return json(200,await read("categories"));
     if(path==="/settings"&&method==="GET")return json(200,await read("settings"));
-    if(path==="/ads"&&method==="GET")return json(200,(await read("ads")).filter(a=>a.active&&a.placement==="homepage"));
+    if(path==="/ads"&&method==="GET")return json(200,(await read("ads")).filter(a=>a.active));
     if(!validToken(event))return json(401,{error:"Admin authentication required."});
     if(path==="/admin/data"&&method==="GET"){
       const [movies,categories,settings,ads]=await Promise.all(["movies","categories","settings","ads"].map(read));
