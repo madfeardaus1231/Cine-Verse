@@ -26,7 +26,8 @@ function json(statusCode,body,extra={}){return {statusCode,headers:{"content-typ
 function b64(v){return Buffer.from(v).toString("base64url");}
 function sign(payload,secret){const data=b64(JSON.stringify(payload));const sig=crypto.createHmac("sha256",secret).update(data).digest("base64url");return `${data}.${sig}`;}
 function validToken(event){
-  const token=(event.headers.authorization||"").replace(/^Bearer\s+/i,"");
+  const headers = event.headers || {};
+const token = (headers.authorization || headers.Authorization || "").replace(/^Bearer\s+/i, "");
   const secret=process.env.JWT_SECRET||"";
   if(!token||!secret)return false;
   const [data,sig]=token.split("."); if(!data||!sig)return false;
@@ -37,7 +38,12 @@ function validToken(event){
 }
 export const handler = async (event) => {
   const requestPath = event.path || new URL(event.rawUrl || event.url || "https://localhost/").pathname;
-const path = requestPath.replace("/.netlify/functions/api","").replace(/^\/api/,"") || "/";
+
+const path = requestPath
+  .replace(/^\/\.netlify\/functions\/api(?=\/|$)/, "")
+  .replace(/^\/api\/api(?=\/|$)/, "")
+  .replace(/^\/api(?=\/|$)/, "") || "/";
+
   const method=event.httpMethod;
   if(method==="OPTIONS") return {statusCode:204,headers:{"access-control-allow-origin":"*","access-control-allow-headers":"content-type,authorization","access-control-allow-methods":"GET,POST,PUT,DELETE,OPTIONS"}};
   try{
