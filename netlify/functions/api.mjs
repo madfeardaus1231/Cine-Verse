@@ -36,7 +36,8 @@ function validToken(event){
   try{const p=JSON.parse(Buffer.from(data,"base64url").toString());return p.role==="admin"&&p.exp>Date.now();}catch{return false;}
 }
 export default async (event) => {
-  const path=event.path.replace("/.netlify/functions/api","").replace(/^\/api/,"")||"/";
+  const requestPath = event.path || new URL(event.rawUrl || event.url || "https://localhost/").pathname;
+const path = requestPath.replace("/.netlify/functions/api","").replace(/^\/api/,"") || "/";
   const method=event.httpMethod;
   if(method==="OPTIONS") return {statusCode:204,headers:{"access-control-allow-origin":"*","access-control-allow-headers":"content-type,authorization","access-control-allow-methods":"GET,POST,PUT,DELETE,OPTIONS"}};
   try{
